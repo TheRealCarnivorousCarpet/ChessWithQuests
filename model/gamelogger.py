@@ -14,6 +14,7 @@ class GameLogger:
     """Třída pro protokolování hry."""
     def __init__( self, soubor : io.TextIOBase ):
         self.soubor = soubor
+        self.log : list[Tah] = [ ]
 
     def uloz_tah( self, tah : Tah ):
         ...

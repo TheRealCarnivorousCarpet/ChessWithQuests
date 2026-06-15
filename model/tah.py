@@ -26,22 +26,21 @@ class Tah:
 
     def over_platnost(self) -> bool:
         # Checks needed:
-        # 1. Does vychozi_pole contain this figurka?
-        # 2. Does cilova_pole contain a figure of the same colour?
-        # 3. Does cilova_pole contain a figure of the opposite colour, and does typ_tahu
-        #    fit to this?
-        # 4. Check figurka.muze_tahat( vychozi_pole, cilova_pole )
-        # 5. If not figurka._hopper( ): are intervening fields empty?
-        # 6. Does the move put the king of the same colour in check?
-        # 7. In case of rochade: does the king move over a field under threat?
-        # 8. In case of en passant: is an opposite pawn next to this pawn, and was that pawn
-        #    moved just now?
-        # -> Many checks need access to herni_plocha, and check 8 needs access to the history
-        #    or at least the previous (half-)move.
-        #    Maybe Tah should be a simple container class, and actions should be in RevizorTahu?
+        # 1. Obsahuje vychozi_pole tuto figurku?
+        # 2. Obsahuje cilova_pole figurku stejné barvy?
+        # 3. Obsahuje cilova_pole figurku opačné barvy, a hodí se to k tomu?
+        # 4. Zkontroluj figurka.muze_tahat( vychozi_pole, cilova_pole )
+        # 5. Pokud ne figurka._hopper( ): jsou mezikroky prázdné?
+        # 6. Dává tento tah šach králi stejné barvy?
+        # 7. V případě rošády: smí se král přesunout přes pole, na kterém je ohrožen?
+        # 8. V případě tahu en passant: nachází se vedle tohoto pěšáku protější pěšák 
+        #    a byl tento pěšák právě teď tažen?
+        # -> Mnoho kontrol vyžaduje přístup k herni_plocha, a tah č. 8 vyžaduje přístup 
+        #    k historii nebo alespoň k předchozímu (polo)tahu.
+        #    Možná by Tah měla být jen jednoduchá třída kontejneru a akce by měly být v RevizorTahu?
         return ...
 
     def proved(self):
-        # Needs access to herni_plocha
-        # Do not forget to update figurka._was_moved
+        # Je třeba mít přístup k herni_plocha
+        # Nezapominej aktualizovat figurka._was_moved
         ...
