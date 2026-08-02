@@ -35,7 +35,7 @@ class Figurka:
         return self._maxmult
 
     def moved(self):
-        self.moved = True
+        self._moved = True
 
 
 class Kral(Figurka):

@@ -1,3 +1,5 @@
+from bdb import Breakpoint
+
 from figurky import *
 from casovac import *
 from logovac import *
@@ -73,8 +75,13 @@ class Sachovnice:
         ydiff=yfin-ystart
         if xdiff == 0 and ydiff == 0:
             return None, None
-        fig=self.getfig(xstart, ystart)
+        fig = self.getfig(xstart, ystart)
+        ispesattak = isinstance(fig, Pesak) and self.isfig(xfin, yfin)
+        # If the target contains a piece, it is certain to be the opponent's, as it has been checked before.
+        # When not attacking, a pawn is like any other piece.
         normvektory=fig.getnormvektory()
+        if ispesattak:
+            normvektory=fig.getnormuvektory()
         xbase = None
 
         # Whether the performed motion vector is a multiple of one of the basic motion vectors of the figure
@@ -82,10 +89,14 @@ class Sachovnice:
         # is multiplied (scalar product) with the performed vector. If the result of that operation is 0, the
         # vectors are collinear and we have found a fitting basic vector.
 
+
         for i in range(len(normvektory)):
             x,y = normvektory[i]
             if x*xdiff+y*ydiff==0:
-                xbase, ybase = fig.getSmery()[i]
+                if not ispesattak:
+                    xbase, ybase = fig.getSmery()[i]
+                else:
+                    xbase, ybase = fig.getuSmery()[i]
                 break
         if xbase is None:
             return None, None
@@ -94,7 +105,9 @@ class Sachovnice:
         # nonzero, else xdiff is used.
 
         mult = xdiff/xbase if ybase == 0 else ydiff/ybase
-        minmult,maxmult = fig.getminmaxmult
+        minmult,maxmult = fig.getminmaxmult()
+        if ispesattak:
+            maxmult = 1
         if mult< minmult or mult > maxmult:
             return None, None
         return xbase, ybase
@@ -102,26 +115,53 @@ class Sachovnice:
 
         # Do something with uvektory
 
+    def checktarget(self, xstart, ystart, xfin, yfin):
+        return (not self.isfig(xfin, yfin)) or self.getfig(xstart, ystart).isbila() != self.getfig(xfin, yfin).isbila()
+
+    def isfig(self, xpos, ypos):
+        return self.getfig(xpos, ypos) is not None
+
+    def isclearpath(self, xstart, ystart, xfin, yfin, xbase, ybase):
+        x = xstart + xbase
+        y = ystart + ybase
+        while not (x == xfin and y == yfin):
+            if self.isfig(x,y):
+                return False
+
+            x += xbase
+            y += ybase
+        return True
 
 
     def precheckmove(self, xstart, ystart, xfin, yfin):
-        #check vector
-        #check target (my own fig)
-        #way blocked
 
         # special cases (castling, en passant)
+
         if not self.checkcoord(xstart, ystart):
             return False
 
         if not self.checkcoord(xfin, yfin):
             return False
 
+        if not self.isfig(xstart, ystart):
+            return False
+
+        if not self.checktarget(xstart, ystart, xfin, yfin):
+            return False
+
+        xbase,ybase = self.checkvect(xstart, ystart, xfin, yfin)
+        if xbase is None:
+            return False
+
+        if not self.isclearpath(xstart,ystart, xfin, yfin, xbase, ybase):
+            return False
 
         return True
 
     def postcheckmove(self):
         #am I in check?
         return True
+
 
 if __name__ == '__main__':
     sacho=Sachovnice()
