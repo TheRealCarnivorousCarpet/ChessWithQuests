@@ -81,20 +81,44 @@ class Tah:
 
         if not isinstance(lastfig, Pesak):
             return False
-
         if not abs(lastystart-lastyfin) == 2:
             return False
-
         if not self._yfin == (lastyfin+lastystart)/2:
             return False
-
         if not lastxstart == self._xfin:
             return False
-
         if lastfig.isBila() == fig.isBila():
             return False
 
         return True
+
+    def checkcastling(self):
+        fig = self._sacho.getfig(self._xstart, self._ystart)
+        if not isinstance(fig, Kral):
+            return False
+        if fig.ismoved():
+            return False
+        # Some of the following lines will cause trouble in the case of Fischer random chess,
+        # but so does the entire concept of castling.
+        if not (abs(5-self._xfin) == 2 and self._yfin == self._ystart):
+            return False
+        if self._xfin == 7:
+            targetfig = self._sacho.getfig(8, self._yfin)
+        else:
+            targetfig = self._sacho.getfig(1, self._yfin)
+        if not isinstance(targetfig, Vez):
+            return False
+        if targetfig.ismoved():
+            return False
+        # This loop should also check whether any of the fields the king moves over is being attacked.
+        # checkcheck is a dummy method as of August 04th, 2026. The extra check for check before the loop is
+        # needed as the king may himself not be in check but a piece is obviously present there.
+        if self.checkcheck(xstart, ystart):
+            return False
+        # The 3rd argument of range is the step direction.
+        for x in range (self._xfin, self._xstart, (self._xstart-self._xfin)/2):
+            if self._sacho.isfig(x, self._yfin) or self.checkcheck(x, self._yfin) :
+                return False
 
 
     def precheckmove(self):
@@ -122,8 +146,12 @@ class Tah:
 
         return True
 
+    def checkcheck(self, x, y):
+        retrun False
+
     def postcheckmove(self):
         #am I in check?
+        #do I give it my colour or king's coords?
         return True
 
     def move(self):
@@ -134,7 +162,6 @@ class Tah:
             # Deletes the reference to the moved piece in its origin.
             self._sacho.delfig(self._xstart, self._ystart)
             isenpassant = False
-
         elif self.checkenpassant():
             lastmove = self._sacho.getlastmove()
             lastxfin = lastmove._xfin

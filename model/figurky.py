@@ -37,6 +37,9 @@ class Figurka:
     def moved(self):
         self._moved = True
 
+    def ismoved(self):
+        return self._moved
+
 
 class Kral(Figurka):
     def __init__(self, isbila, moved=False):
