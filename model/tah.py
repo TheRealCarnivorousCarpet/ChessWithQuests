@@ -54,7 +54,7 @@ class Tah:
 
     def checktarget(self):
         return (not self._sacho.isfig(self._xfin, self._yfin)) or \
-            self._sacho.getfig(self._xstart, self._ystart).isbila() != self._sacho.getfig(self._xfin, self._yfin).isbila()
+            self._sacho.getfig(self._xstart, self._ystart).isBila() != self._sacho.getfig(self._xfin, self._yfin).isBila()
 
     def isclearpath(self, xbase, ybase):
         x = self._xstart + xbase
@@ -104,8 +104,12 @@ class Tah:
             return False
         if self._xfin == 7:
             targetfig = self._sacho.getfig(8, self._yfin)
+            checkfreerange = [6,7]
+            checkcheckrange = [5,6,7]
         else:
             targetfig = self._sacho.getfig(1, self._yfin)
+            checkfreerange = [2,3,4]
+            checkcheckrange = [3,4,5]
         if not isinstance(targetfig, Vez):
             return False
         if targetfig.ismoved():
@@ -113,12 +117,16 @@ class Tah:
         # This loop should also check whether any of the fields the king moves over is being attacked.
         # checkcheck is a dummy method as of August 04th, 2026. The extra check for check before the loop is
         # needed as the king may himself not be in check but a piece is obviously present there.
-        if self.checkcheck(xstart, ystart):
-            return False
         # The 3rd argument of range is the step direction.
-        for x in range (self._xfin, self._xstart, (self._xstart-self._xfin)/2):
-            if self._sacho.isfig(x, self._yfin) or self.checkcheck(x, self._yfin) :
+        for x in checkfreerange:
+            if self._sacho.isfig(x, self._yfin):
                 return False
+
+        for x in checkcheckrange:
+            if self.checkcheck(x, self._yfin, fig.isBila()):
+                return False
+        return True
+
 
 
     def precheckmove(self):
@@ -146,32 +154,51 @@ class Tah:
 
         return True
 
-    def checkcheck(self, x, y):
-        retrun False
+    def checkcheck(self, x, y, bilykral):
+        for xpos in range(1,9):
+            for ypos in range(1,9):
+                fig = self._sacho.getfig(xpos,ypos)
+                if fig is not None and fig.isBila() != bilykral:
+                    if Tah(xpos, ypos, x, y, self._sacho).checkvect() != (None, None):
+                        return True
+                    # This may further be optimised, the loop may be broken after all opposing pieces have been
+                    # found or after 16 finds for simplicity.
+        return False
 
     def postcheckmove(self):
-        #am I in check?
-        #do I give it my colour or king's coords?
-        return True
+        bilytah = self._sacho.getfig(self._xfin, self._yfin).isBila()
+        for x in range(1, 9):
+            for y in range(1, 9):
+                fig = self._sacho.getfig(x, y)
+                if isinstance(fig, Kral) and fig.isBila() == bilytah:
+                    return not self.checkcheck(x,y, bilytah)
+        # There is exactly one. Further optimisation may be achieved by first searching the king
+        # at the last seen location. Search from opposite ends of the board in dependence on colour
+        # may also be performed.
 
     def move(self):
         if self.precheckmove():
             deadfig = self._sacho.delfig(self._xfin, self._yfin)
-            # Creates a reference to the moved piece in its destination.
-            self._sacho.setfig(self._sacho.getfig(self._xstart, self._ystart), self._xfin, self._yfin)
-            # Deletes the reference to the moved piece in its origin.
-            self._sacho.delfig(self._xstart, self._ystart)
+            # Creates a reference to the moved piece in its destination and deletes it in its origin.
+            self._sacho.setfig(self._sacho.delfig(self._xstart, self._ystart), self._xfin, self._yfin)
             isenpassant = False
         elif self.checkenpassant():
             lastmove = self._sacho.getlastmove()
             lastxfin = lastmove._xfin
             lastyfin = lastmove._yfin
             deadfig = self._sacho.delfig(lastxfin, lastyfin)
-            # Creates a reference to the moved piece in its destination.
-            self._sacho.setfig(self._sacho.getfig(self._xstart, self._ystart), self._xfin, self._yfin)
-            # Deletes the reference to the moved piece in its origin.
-            self._sacho.delfig(self._xstart, self._ystart)
+            # Creates a reference to the moved pawn in its destination and deletes it in its origin.
+            self._sacho.setfig(self._sacho.delfig(self._xstart, self._ystart), self._xfin, self._yfin)
             isenpassant = True
+        elif self.checkcastling():
+            # Creates a reference to the moved king in its destination and deletes it in its origin.
+            self._sacho.setfig(self._sacho.delfig(self._xstart, self._ystart), self._xfin, self._yfin)
+            vezxstart= 8 if self._xfin == 7 else 1
+            # Creates a reference to the moved rook in its destination and deletes it in its origin.
+            self._sacho.setfig(self._sacho.delfig(vezxstart, self._ystart), (self._xfin+self._xstart)/2, self._yfin)
+            # Postcheckmove would be redundant. The king is certain not to be in check due to built-in checks.
+        else:
+            return False
 
         if not self.postcheckmove():
             # Undoes the moving and resurrects the removed piece if applicable.

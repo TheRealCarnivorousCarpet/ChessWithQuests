@@ -5,6 +5,7 @@ from logovac import *
 class Sachovnice:
     def __init__(self, preload=True, timer = None, logger = Logovac()):
         self._playarray = [[None]*8 for i in range(8)]
+        # Needs to be updated by a manager of some sort.
         self._bilaMove =  True
         self._finished = False
         self._lastmove = None
